@@ -34,8 +34,9 @@
         map.data.loadGeoJson('/api/loc'); // 측정소 정보 GeoJson 로드
         map.data.setStyle(function(feature) {
   		  return {
-  		    icon: gradeToMarker(feature.getProperty('pm10grade')), // pm10단계값에 따라 마커 색상 결정
-  		    visible: true,
+  		    //icon: gradeToMarker(feature.getProperty('pm10grade')), // pm10단계값에 따라 마커 색상 결정
+          icon: pm10LevelToMarker(feature.getProperty('pm10value')),   // pm10 값에 따라 마커 색상 조절
+          visible: true,
   		    clickable: true,
           title: feature.getProperty('stationName') + ": " + feature.getProperty('pm10value')// 롤오버 텍스트
   		    };
@@ -72,6 +73,31 @@
                               'Error: The Geolocation service failed.' :
                               'Error: Your browser doesn\'t support geolocation.');
         infoWindow.open(map);
+      }
+
+      // http://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=7|FF0000|000000
+
+      function pm10LevelToMarker(pm10Level) {
+        var red = 0;
+        var blue = 0;
+        var green = 0;
+        var err = false;
+
+        // 00FFFF (0, cyan) - 00FF00 (40, green) - FF8000 (80, Orange) - 800000 (200, Maroon)
+        if (pm10Level > 200) { red = 128; }
+        else if (pm10Level > 80) { red = 255 - (pm10Level - 80) * 127 / 120; green = red + 127 }
+        else if (pm10Level > 40) { red = (pm10Level - 40) * 255 / 40; green = 255 - red / 2 }
+        else if (pm10Level > 0) { blue = (40 - pm10Level) * 255 / 50; green = 255 }
+        else { err = true; }
+
+        if (err) { return "https://maps.gstatic.com/mapfiles/ms2/micons/mechanic.png" }
+        else { return "https://chart.googleapis.com/chart?chst=d_map_pin_letter&chld=" + parseInt(pm10Level / 10) + "|" + make2digit(parseInt(red).toString(16)) + make2digit(parseInt(green).toString(16)) + make2digit(parseInt(blue).toString(16)) + "|000000" }
+      }
+
+      function make2digit(hex) {
+        hex = hex + '';
+        if (hex.length == 1) { return '0' + hex; }
+        else return hex;
       }
 
       // 미세먼지 등급별 마커 소스 링크
