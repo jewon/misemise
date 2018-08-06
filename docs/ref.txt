@@ -1,0 +1,10 @@
+전국 대기질측정소 정보 조회 URL:
+http://openapi.airkorea.or.kr/openapi/services/rest/MsrstnInfoInqireSvc/getMsrstnList?addr=&pageNo=1&numOfRows=500&ServiceKey=*******서비스키*******&_returnType=json
+
+1. 프로젝트 폴더에 '_config.js' 생성
+2. 생성한 파일에 다음과 같이 작성
+    module.exports = {
+      mise : "---대기질정보 조회 API 서비스키---",
+      mise_loc : "---측정소정보 조회 API 서비스키---",
+      google : "---Google Map 브라우저 API 인증키---"
+    }
