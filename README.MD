@@ -1,5 +1,5 @@
 # **misemise**
-![alt text](/docs/20180806.png)
+![alt text](/docs/sample.png)
 (2018. 8. 6 update)
 
 ## Project Main Goal
@@ -12,3 +12,8 @@
 
 ## Tech
 * `Node.js`
+
+## Commit log
+* 20180806 미세먼지 값 조회 및 Google Map에 등급에 따라(좋음, 보통, 나쁨)마커 색상으로 나타내기  
+* 20180806 브라우저 단에서 사용할 수 있는 js Script 링크 생성(/script)
+* 20180806 미세먼지 값을 10으로 나눈 수를 마커 라벨로 나타냄, 그 수에 따라 마커 색상(17단계) 정하도록 변경  

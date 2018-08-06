@@ -20,6 +20,7 @@
   </head>
   <body>
     <div id="map"></div>
+    <script src="/script/marker_url_generator.js"></script>
     <script>
       var map;
       function initMap() {
@@ -35,7 +36,7 @@
         map.data.setStyle(function(feature) {
   		  return {
   		    //icon: gradeToMarker(feature.getProperty('pm10grade')), // pm10단계값에 따라 마커 색상 결정
-          icon: pm10LevelToMarker(feature.getProperty('pm10value')),   // pm10 값에 따라 마커 색상 조절
+          icon: marker_link(feature.getProperty('pm10value')),   // pm10 값에 따라 마커 색상 조절
           visible: true,
   		    clickable: true,
           title: feature.getProperty('stationName') + ": " + feature.getProperty('pm10value')// 롤오버 텍스트
@@ -77,7 +78,7 @@
 
       // http://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=7|FF0000|000000
 
-      function pm10LevelToMarker(pm10Level) {
+      /*function pm10LevelToMarker(pm10Level) {
         var red = 0;
         var blue = 0;
         var green = 0;
@@ -107,7 +108,7 @@
         else if (grade == 3) { return "https://maps.gstatic.com/mapfiles/ms2/micons/yellow.png"}
         else if (grade == 4) { return "https://maps.gstatic.com/mapfiles/ms2/micons/red.png"}
         else { return "https://maps.gstatic.com/mapfiles/ms2/micons/mechanic.png"}
-      }
+      }*/
 
     </script>
     <script async defer

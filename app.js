@@ -50,6 +50,8 @@ app.get('/', (req, res) => {
   })
 })
 
+app.use('/script', express.static("./script"));
+
 // 측정소 목록 전체 응답용 API
 app.get('/api/loc', (req, res) => res.json(mise_geojson))
 
