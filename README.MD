@@ -1,6 +1,6 @@
 # **misemise**
 ![alt text](/docs/sample.png)
-(2018. 8. 6 update)
+(2018. 8. 8 update)
 
 ## Project Main Goal
 * 미세먼지 정보(PM10, PM2.5)를 실시간으로 받아 Google Map에 시각화  
