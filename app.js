@@ -50,6 +50,7 @@ app.get('/', (req, res) => {
   })
 })
 
+// 브라우저단 스크립트 소스
 app.use('/script', express.static("./script"));
 
 // 측정소 목록 전체 응답용 API
@@ -75,19 +76,20 @@ app.get('/api/mise/latlng/:lat/:lng', (req, res) => {
   }
   var distance_value = [];
 
-  // 반경 10km 이내 Station 찾기
-  let stations10km = mise_geojson.features.filter(s => {
-    let distance = get_distance_XY(reqlat, reqlng, s.geometry.coordinates[0], s.geometry.coordinates[1]);
-    distance_value.push({"distance" : distance, "value" : s.properties.pm10Value})
-    return (distance < 10)
-  });
+// 반경 10km 이내 Station 찾기
+mise_geojson.features.forEach(s => {
+  let distance = get_distance_XY(reqlat, reqlng, s.geometry.coordinates[1], s.geometry.coordinates[0]);
+  if (distance < 10 && s.properties.pm10value !== "-" && s.properties.pm10value ) {
+    distance_value.push({"distance" : distance, "value" : s.properties.pm10value})
+  };
+});
 
   // 찾은 station들의 먼지값 IDW계산
   if (!distance_value[0]) {
-    return res.json({ message : "No Station Near 10km" });
+    return res.json({ result : "", stations : [], message : "No Station Near 10km" });
   }
   else {
-    return res.json({ result : doIDW(distance_value) });
+    return res.json({ result : doIDW(distance_value), stations : distance_value, message : distance_value.length + " stations are in 10km" });
   }
 })
 
