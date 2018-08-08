@@ -53,15 +53,15 @@
               lng: position.coords.longitude
             };
 
-            //infoWindow.setPosition(pos);
-            //infoWindow.setContent('You\'re here now');
-            //infoWindow.open(map);
             // 현재 위치 마커
             myloc = new google.maps.Marker({position: pos, map: map, draggable: true, icon: "https://maps.gstatic.com/mapfiles/ms2/micons/pink-dot.png", title: "You\'re here!"});
             pos = myloc.getPosition(); // gmap에서의 Position형식(메소드 포함)
             google.maps.event.addListener(myloc, "dragend", function() { // 마커 위치 변경시 위치 업데이트
               pos = myloc.getPosition();
               req_idw(pos, get_idw);
+            });
+            google.maps.event.addListener(myloc, 'click', function() { // 마커 클릭시 infoWindow 다시 열림
+              infoWindow.open(map, myloc);
             });
             map.panTo(pos);
             map.setZoom(11);
@@ -93,7 +93,7 @@
       // req_idw 콜백
       function get_idw(result) {
         if (result.result) {
-          infoWindow.setContent(result.result.toFixed(0) + " (" + result.stations.length + "개 측정소에서 추정)");
+          infoWindow.setContent("<strong>" + result.result.toFixed(0) + "</strong>" + " (" + result.stations.length + "개 측정소에서 추정)");
         }
         else {
           infoWindow.setContent(result.message);
