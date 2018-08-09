@@ -32,10 +32,13 @@ var j = schedule.scheduleJob(req_mise_sec + ' ' + req_mise_min + ' * * * *', fun
 
 // 메인
 app.get('/', (req, res) => {
-  fs.readFile('index.html', function(err, data){
-    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-    res.end(data);
-  })
+  if (req_times === 0) { res.status(404).send("서비스 준비중입니다")}
+  else {
+    fs.readFile('index.html', function(err, data){
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+      res.end(data);
+    })
+  }
 })
 
 // 브라우저단 스크립트 소스
@@ -59,26 +62,41 @@ app.get('/api/mise/:stationName', (req, res) => {
 app.get('/api/mise/latlng/:lat/:lng', (req, res) => {
   let reqlat = parseFloat(req.params.lat);
   let reqlng = parseFloat(req.params.lng);
-  if (!reqlat || !reqlng) {
+  if (!reqlat || !reqlng) { // param이 숫자 아닌경우
     return res.status(400).json({ error : "Incorrect LatLng" })
   }
-  var distance_value = [];
+
+  var distance_value_pm10 = [];
+  var distance_value_pm25 = [];
 
 // 반경 10km 이내 Station 찾기 (getDistanceFromXY 모듈)
   mise_geojson.features.forEach(s => {
     let distance = get_distance_XY(reqlat, reqlng, s.geometry.coordinates[1], s.geometry.coordinates[0]);
-    if (distance < 10 && s.properties.pm10value !== "-" && s.properties.pm10value ) {
-      distance_value.push({"distance" : distance, "value" : s.properties.pm10value})
+    if (distance < 10 && !isNaN(+s.properties.pm10value)) {
+      distance_value_pm10.push({"distance" : distance, "value" : s.properties.pm10value});
     };
+    if (distance < 10 && !isNaN(+s.properties.pm25value)) {
+      distance_value_pm25.push({"distance" : distance, "value" : s.properties.pm25value});
+    }
   });
 
   // 찾은 station들의 먼지값 IDW계산
-  if (!distance_value[0]) {
-    return res.json({ result : "", stations : [], message : "No Station Near 10km" });
+  let resultJson = { result : { pm10 : { result: "", stations: [], message: ""}, pm25 : { result : "", stations: [], message: ""}}};
+  if (!distance_value_pm10[0]) {
+    resultJson.result.pm10.message = "No Station Near 10km(PM10)!";
   }
   else {
-    return res.json({ result : doIDW(distance_value), stations : distance_value, message : distance_value.length + " stations are in 10km" });
+    resultJson.result.pm10.result = doIDW(distance_value_pm10);
+    resultJson.result.pm10.stations = distance_value_pm10;
   }
+  if (!distance_value_pm25[0]) {
+    resultJson.result.pm25.message = "No Station Near 10km(PM25)!";
+  }
+  else {
+    resultJson.result.pm25.result = doIDW(distance_value_pm25);
+    resultJson.result.pm25.stations = distance_value_pm25;
+  }
+  return res.json(resultJson);
 })
 
 app.listen(service_port, () => {

@@ -43,7 +43,7 @@
   		    clickable: true,
           title: feature.getProperty('stationName') + ": " + feature.getProperty('pm10value')// 롤오버 텍스트
   		    };
-  		   });
+  		  });
 
        // Geolocation
        if (navigator.geolocation) {
@@ -92,11 +92,11 @@
 
       // req_idw 콜백
       function get_idw(result) {
-        if (result.result) {
-          infoWindow.setContent("<strong>" + result.result.toFixed(0) + "</strong>" + " (" + result.stations.length + "개 측정소에서 추정)");
+        if (result.result.pm10.result) {
+          infoWindow.setContent("<strong>" + result.result.pm10.result.toFixed(0) + "</strong>" + " (" + result.result.pm10.stations.length + "개 측정소에서 추정)");
         }
         else {
-          infoWindow.setContent(result.message);
+          infoWindow.setContent(result.result.pm10.message);
         }
         infoWindow.open(map, myloc);
       }
