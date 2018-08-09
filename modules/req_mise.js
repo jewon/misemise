@@ -14,6 +14,7 @@ module.exports = function(_mise_geojson, _key){
     xhr.send();
     xhr.onreadystatechange = function() {
     	if (xhr.readyState == 4 && xhr.status == 200) {
+        console.log(sido + " 200 OK");
         var temp = JSON.parse(xhr.responseText);
         temp.list.map((obj) => {
           // 이름 같은 인덱스 찾아서 geojson의 속성에 pm25, pm10값 삽입
@@ -24,8 +25,8 @@ module.exports = function(_mise_geojson, _key){
           _mise_geojson.features[i].properties.pm10grade = obj.pm10Grade;
         })
       }
-      else {
-        console.log(xhr.status + ": req failed" + sido)
+      else if (xhr.readyState == 4) {
+        console.log(sido + " req failed... status : "+ xhr.status)
       }
     }
   });

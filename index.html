@@ -16,34 +16,51 @@
         margin: 0;
         padding: 0;
       }
+      #pm10UI, #pm25UI {
+        background-color: #fff;
+        border: 2px solid #fff;
+        border-radius: 3px;
+        box-shadow: 0 2px 6px rgba(0,0,0,.3);
+        cursor: pointer;
+        float: left;
+        margin-bottom: 22px;
+        text-align: center;
+      }
+      #pm10Text, #pm25Text {
+        color: rgb(25,25,25);
+        font-family: Roboto,Arial,sans-serif;
+        font-size: 15px;
+        line-height: 25px;
+        padding-left: 5px;
+        padding-right: 5px;
+      }
+      #pm25UI {
+        margin-left: 12px;
+      }
     </style>
   </head>
   <body>
     <div id="map"></div>
     <script src="/script/marker_url_generator.js"></script>
+    <script src="/script/makeToggleButton.js"></script>
     <script>
-      var map, infoWindow, myloc;
+      var map, infoWindow, myloc, pm;
       function initMap() {
         // map정의
         var pos = {lat: 36, lng: 128};
+        pm = "pm10";
         map = new google.maps.Map(document.getElementById('map'), {
           zoom: 7,
           center: pos
         });
+
+
         // infoWindow정의
         infoWindow = new google.maps.InfoWindow;
 
         // Load GeoJSON.
         map.data.loadGeoJson('/api/loc'); // 측정소 정보 GeoJson 로드
-        map.data.setStyle(function(feature) {
-  		  return {
-  		    //icon: gradeToMarker(feature.getProperty('pm10grade')), // pm10단계값에 따라 마커 색상 결정
-          icon: marker_link(feature.getProperty('pm10value')),   // pm10 값에 따라 마커 색상 조절
-          visible: true,
-  		    clickable: true,
-          title: feature.getProperty('stationName') + ": " + feature.getProperty('pm10value')// 롤오버 텍스트
-  		    };
-  		  });
+        map.data.setStyle(pmMakrkerSetStyle);
 
        // Geolocation
        if (navigator.geolocation) {
@@ -61,7 +78,8 @@
               req_idw(pos, get_idw);
             });
             google.maps.event.addListener(myloc, 'click', function() { // 마커 클릭시 infoWindow 다시 열림
-              infoWindow.open(map, myloc);
+              //infoWindow.open(map, myloc);
+              togglePm("pm25");
             });
             map.panTo(pos);
             map.setZoom(11);
@@ -73,7 +91,40 @@
           // Browser doesn't support Geolocation
           handleLocationError(false, infoWindow, map.getCenter());
         }
+
+        // Create the DIV to hold the control and call the CenterControl()
+        // constructor
+        // passing in this DIV.
+        var toggleButtonDiv = document.createElement('div');
+        var toggleButton = new ToggleButton(toggleButtonDiv, map, togglePm);
+
+        toggleButtonDiv.index = 1;
+        toggleButtonDiv.style['padding-top'] = '10px';
+        map.controls[google.maps.ControlPosition.TOP_CENTER].push(toggleButtonDiv);
       }// initMap
+
+
+
+      function togglePm(toggleTo) {
+        if (pm === toggleTo) {
+          return;
+        } else {
+          pm = toggleTo;
+          map.data.revertStyle();
+          map.data.setStyle(pmMakrkerSetStyle)
+        }
+        req_idw(myloc.getPosition(), get_idw);
+      }
+
+      function pmMakrkerSetStyle (feature) {
+        return {
+            //icon: gradeToMarker(feature.getProperty('pm10grade')), // pm10단계값에 따라 마커 색상 결정
+            icon: marker_link(feature.getProperty(pm + 'value'), pm),   // pm10 값에 따라 마커 색상 조절
+            visible: true,
+            clickable: true,
+            title: feature.getProperty('stationName') + ": " + feature.getProperty(pm + 'value')// 롤오버 텍스트
+          };
+      }
 
       // Geolocation Error
       function handleLocationError(browserHasGeolocation, infoWindow, pos) {
@@ -90,13 +141,13 @@
         $.getJSON('/api/mise/latlng/'+ position.lat() + "/" + position.lng(), callback)
       }
 
-      // req_idw 콜백
+      // req_idw 콜백(infoWindow 표출)
       function get_idw(result) {
         if (result.result.pm10.result) {
-          infoWindow.setContent("<strong>" + result.result.pm10.result.toFixed(0) + "</strong>" + " (" + result.result.pm10.stations.length + "개 측정소에서 추정)");
+          infoWindow.setContent("<strong>" + result.result[pm].result.toFixed(0) + "</strong>" + " (" + result.result[pm].stations.length + "개 측정소에서 추정)");
         }
         else {
-          infoWindow.setContent(result.result.pm10.message);
+          infoWindow.setContent(result.result[pm].message);
         }
         infoWindow.open(map, myloc);
       }

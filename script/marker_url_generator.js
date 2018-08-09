@@ -1,4 +1,5 @@
-function marker_link(pm10value) {
+// pm값에 따라 마커 아이콘으로 사용할 링크를 반환해주는 모듈
+function marker_link(pmValue, pm) { // @param pm : "pm10" 또는 "pm25"
   var marker_color_per10 = [
     "00FFFF", // 0
     "00FFBF", // 10
@@ -19,9 +20,14 @@ function marker_link(pm10value) {
     "660000", // 160+, very bad
   ];
 
-  var pm10level = parseInt(pm10value / 10);
-  if (pm10level > 16) { pm10level = 16; }
+  var pmLevel;
+  if (pm === "pm25") {
+    pmLevel = parseInt(pmValue / 5)
+  } else {
+    pmLevel = parseInt(pmValue / 10)
+  }
 
-  if (!pm10level && pm10level != 0) { return "https://maps.gstatic.com/mapfiles/ms2/micons/mechanic.png" } // 정비소 마커
-  else { return "https://chart.googleapis.com/chart?chst=d_map_pin_letter&chld=" + parseInt(pm10value / 10) + "|" + marker_color_per10[pm10level] + "|000000" }
+  if (pmLevel > 16) { pmLevel = 16; }
+  if (!pmLevel && pmLevel != 0) { return "https://maps.gstatic.com/mapfiles/ms2/micons/mechanic.png" } // 정비소 마커
+  else { return "https://chart.googleapis.com/chart?chst=d_map_pin_letter&chld=" + parseInt(pmValue / 10) + "|" + marker_color_per10[pmLevel] + "|000000" }
 }
