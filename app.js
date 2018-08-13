@@ -9,26 +9,35 @@ const service_port = 1337;
 var locator_geojson = require('./modules/miselocator_geojson.js');
 var get_miseloc_arr = require('./modules/geojson_getnamearray.js');
 var get_distance_XY = require('./modules/getDistanceFromXY.js');
+var req_miseloc = require('./modules/req_miseloc.js');
 var req_mise = require('./modules/req_mise.js');
 var doIDW = require('./modules/IDW.js');
 var keys = require('./_config.js');
 
-// 타이머
-const startTime = new Date(Date.now() + 3000); // 3초 뒤 서비스
-const req_mise_min  = startTime.getMinutes();
-const req_mise_sec = startTime.getSeconds();
-console.log("PM Value will be update every " + req_mise_min + "m " + req_mise_sec + "s");
+var req_times = 0; // 미세먼지 값 API 요청횟수
+var mise_geojson = {};
 
-// 측정소 위치 불러옴
-var mise_geojson = locator_geojson();
-
-// 1시간마다 반복작업 (node-schedule)
-var req_times = 0;
-var j = schedule.scheduleJob(req_mise_sec + ' ' + req_mise_min + ' * * * *', function(){
-  // 각 측정소에 미세먼지 값 요청해 추가
-  req_mise(mise_geojson, keys.mise);
-  console.log("---Reqest Airkorea API " + (++req_times) + " times---" )
+req_miseloc(keys.mise_loc, function req_miseloc_cb() { //미세먼지 측정소 조회
+  mise_geojson = locator_geojson(); // 조회 후 geojson변환
+  if (req_times++ == 0) { // 서버 시작시 미세먼지 조회 및 측정소 조회 스케쥴링
+    make_schedule_daily(req_miseloc(req_miseloc_cb, keys.mise_loc));
+    make_schedule_hourly(req_mise(mise_geojson, keys.mise));
+  }
 });
+
+function make_schedule_hourly (to_schedule) { // 미세먼지값 조회 스케쥴링
+  // 1시간마다 반복작업 (node-schedule)
+  let now = new Date(Date.now());
+  console.log("PM Value will be update every " + now.getMinutes() + "m " + now.getSeconds() + "s (once an hour)");
+  var job1 = schedule.scheduleJob(now.getSeconds() + ' ' + now.getMinutes() + ' * * * *', to_schedule);
+}
+
+function make_schedule_daily (to_schedule) { // 미세먼지측정소 조회 스케쥴링
+  // 1일마다 반복작업 (node-schedule)
+  let now = new Date(Date.now());
+  console.log("Station Info will be update every " + now.getHours() + "h " + now.getMinutes() + "m (once a day)");
+  var job2 = schedule.scheduleJob(now.getMinutes() + ' ' + now.getHours() + ' * * * *', to_schedule);
+}
 
 // 메인
 app.get('/', (req, res) => {
@@ -100,5 +109,5 @@ app.get('/api/mise/latlng/:lat/:lng', (req, res) => {
 })
 
 app.listen(service_port, () => {
-  console.log('Example app listening on port' + service_port);
+  console.log('Service is on port' + service_port);
 });
