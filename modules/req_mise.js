@@ -19,10 +19,16 @@ module.exports = function(_mise_geojson, _key){
         temp.list.map((obj) => {
           // 이름 같은 인덱스 찾아서 geojson의 속성에 pm25, pm10값 삽입
           let i = _mise_geojson.features.findIndex((loc) => loc.properties.stationName == obj.stationName)
-          _mise_geojson.features[i].properties.pm25value = obj.pm25Value;
-          _mise_geojson.features[i].properties.pm10value = obj.pm10Value;
-          _mise_geojson.features[i].properties.pm25grade = obj.pm25Grade;
-          _mise_geojson.features[i].properties.pm10grade = obj.pm10Grade;
+          if (i > 0) {
+            _mise_geojson.features[i].properties.pm25value = obj.pm25Value;
+            _mise_geojson.features[i].properties.pm10value = obj.pm10Value;
+            _mise_geojson.features[i].properties.pm25grade = obj.pm25Grade;
+            _mise_geojson.features[i].properties.pm10grade = obj.pm10Grade;
+            _mise_geojson.features[i].properties.sido = sido; // 시도명 저장
+          } else {
+            console.log("Warning: Can't find " + obj.stationName + " from mise_loc geojson");
+          }
+
         })
       }
       else if (xhr.readyState == 4) {
