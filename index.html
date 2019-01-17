@@ -44,7 +44,7 @@
     <script src="/script/marker_url_generator.js"></script>
     <script src="/script/makeToggleButton.js"></script>
     <script>
-      var map, infoWindow, myloc, pm;
+      var map, infoWindow, myloc, pm, mise_point, mise_poly;
       function initMap() {
         // map정의
         var pos = {lat: 36, lng: 128};
@@ -58,9 +58,38 @@
         // infoWindow정의
         infoWindow = new google.maps.InfoWindow;
 
-        // Load GeoJSON.
-        map.data.loadGeoJson('/api/loc'); // 측정소 및 관측 정보 GeoJson 로드
-        map.data.setStyle(pmMakrkerSetStyle);
+
+        // 미세먼지 마커 데이터레이어
+        mise_point = new google.maps.Data({map: map})
+        mise_point.loadGeoJson('/api/loc'); // 측정소 및 관측 정보 GeoJson 로드
+        mise_point.setStyle(pmMakrkerSetStyle);
+
+        // 미세먼지 시도폴리곤 데이터레이어
+        mise_poly = new google.maps.Data({map: map})
+        mise_poly.loadGeoJson('/resources/citypolygon')
+        mise_poly.setStyle({
+          fillColor: 'green',
+          strokeWeight: 1,
+          visible: false
+        })
+
+
+        // zoom에 따른 폴리곤/마커 전환 이벤트 정의
+        map.addListener('zoom_changed', function() {
+          let zoom = map.getZoom()
+          console.log("zoom changed " + zoom)
+
+          if (zoom < 9) {
+            mise_point.revertStyle();
+            mise_point.forEach(function(f){mise_point.overrideStyle(f, {visible: false})})
+            mise_poly.revertStyle();
+            mise_poly.forEach(function(f){mise_poly.overrideStyle(f, {visible: true})})
+            //mise_poly.StyleOptions.visible = true;
+          } else {
+            mise_point.revertStyle();
+            mise_poly.revertStyle();
+          }
+        });
 
        // Geolocation
        if (navigator.geolocation) {
@@ -78,7 +107,7 @@
               req_idw(pos, get_idw);
             });
             google.maps.event.addListener(myloc, 'click', function() { // 마커 클릭시 infoWindow 다시 열림
-              //infoWindow.open(map, myloc);
+              infoWindow.open(map, myloc);
               togglePm("pm25");
             });
             map.panTo(pos);
@@ -110,8 +139,8 @@
           return;
         } else {
           pm = toggleTo;
-          map.data.revertStyle();
-          map.data.setStyle(pmMakrkerSetStyle)
+          mise_point.revertStyle();
+          mise_point.setStyle(pmMakrkerSetStyle)
         }
         req_idw(myloc.getPosition(), get_idw);
       }

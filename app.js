@@ -13,6 +13,7 @@ var req_miseloc = require('./modules/req_miseloc.js');
 var req_mise = require('./modules/req_mise.js');
 var doIDW = require('./modules/IDW.js');
 var keys = require('./_config.js');
+var citypoly = require('./resources/CTPRVN.json');
 
 var req_times = 0; // 미세먼지 값 API 요청횟수
 var mise_geojson = {};
@@ -50,6 +51,9 @@ app.get('/', (req, res) => {
   }
 })
 
+// 테스트 페이지
+app.use('/test', express.static("./temp/test2.html"));
+
 // 브라우저단 스크립트 소스
 app.use('/script', express.static("./script"));
 
@@ -67,7 +71,10 @@ app.get('/api/mise/:stationName', (req, res) => {
   }
 })
 
-// 특정 위치 먼지값(IDW) API
+// citypolygon 반환
+app.get('/resources/citypolygon', (req, res) => res.json(citypoly))
+
+// 특정 위치 먼지값 추정(IDW) 반환 API
 app.get('/api/mise/latlng/:lat/:lng', (req, res) => {
   let reqlat = parseFloat(req.params.lat);
   let reqlng = parseFloat(req.params.lng);
