@@ -14,9 +14,10 @@ var req_mise = require('./modules/req_mise.js');
 var doIDW = require('./modules/IDW.js');
 var keys = require('./_config.js');
 var citypoly = require('./resources/CTPRVN.json');
+var calc_sido = require('./modules/calc_sido_pm.js')
 
 var req_times = 0; // 미세먼지 값 API 요청횟수
-var mise_geojson = {};
+var mise_geojson = {}; // 미세먼지값을 속성으로 갖는 지리객체
 
 req_miseloc(keys.mise_loc, function req_miseloc_cb() { //미세먼지 측정소 조회
   mise_geojson = locator_geojson(); // 조회 후 geojson변환
@@ -72,7 +73,17 @@ app.get('/api/mise/:stationName', (req, res) => {
 })
 
 // citypolygon 반환
-app.get('/resources/citypolygon', (req, res) => res.json(citypoly))
+app.get('/resources/citypolygon', (req, res) => {
+  let pm_citypoly = citypoly;
+  let sidomean = calc_sido(mise_geojson)
+  pm_citypoly.features.forEach(p => {     // error
+    p.properties = Object.assign(sidomean[p.properties.CTP_KOR_NM], p.properties)
+  })
+  return res.json(pm_citypoly)
+})
+
+// 시도별 미세먼지 평균값 반환
+app.get('/api/sidomean', (req, res) => res.json(calc_sido(mise_geojson)))
 
 // 특정 위치 먼지값 추정(IDW) 반환 API
 app.get('/api/mise/latlng/:lat/:lng', (req, res) => {

@@ -43,14 +43,15 @@
     <div id="map"></div>
     <script src="/script/marker_url_generator.js"></script>
     <script src="/script/makeToggleButton.js"></script>
+    <script src="/script/poly_color_selector.js"></script>
     <script>
-      var map, infoWindow, myloc, pm, mise_point, mise_poly;
+      var map, infoWindow, myloc, pm, mise_point, mise_poly, bzoom;
       function initMap() {
         // map정의
         var pos = {lat: 36, lng: 128};
         pm = "pm10";
         map = new google.maps.Map(document.getElementById('map'), {
-          zoom: 7,
+          zoom: 9,
           center: pos
         });
 
@@ -66,12 +67,8 @@
 
         // 미세먼지 시도폴리곤 데이터레이어
         mise_poly = new google.maps.Data({map: map})
-        mise_poly.loadGeoJson('/resources/citypolygon')
-        mise_poly.setStyle({
-          fillColor: 'green',
-          strokeWeight: 1,
-          visible: false
-        })
+        mise_poly.loadGeoJson('/resources/citypolygon');
+        mise_poly.setStyle(pmPolySetStyle);
 
 
         // zoom에 따른 폴리곤/마커 전환 이벤트 정의
@@ -79,16 +76,17 @@
           let zoom = map.getZoom()
           console.log("zoom changed " + zoom)
 
-          if (zoom < 9) {
+          if (bzoom >= 9 && zoom < 9) {
             mise_point.revertStyle();
             mise_point.forEach(function(f){mise_point.overrideStyle(f, {visible: false})})
             mise_poly.revertStyle();
             mise_poly.forEach(function(f){mise_poly.overrideStyle(f, {visible: true})})
             //mise_poly.StyleOptions.visible = true;
-          } else {
+          } else if (bzoom < 9 && zoom >= 9) {
             mise_point.revertStyle();
             mise_poly.revertStyle();
-          }
+          } else {}
+          bzoom = zoom;
         });
 
        // Geolocation
@@ -145,6 +143,7 @@
         req_idw(myloc.getPosition(), get_idw);
       }
 
+      // set marker style(color by pmValue)
       function pmMakrkerSetStyle (feature) {
         return {
             //icon: gradeToMarker(feature.getProperty('pm10grade')), // pm10단계값에 따라 마커 색상 결정
@@ -153,6 +152,18 @@
             clickable: true,
             title: feature.getProperty('stationName') + ": " + feature.getProperty(pm + 'value')// 롤오버 텍스트
           };
+      }
+
+      // set polygon style(color by pmValue)
+      function pmPolySetStyle (feature) {
+        let sido = feature.getProperty("CTP_KOR_NM");
+        // $.getJson('/api/sidomean')
+        return {
+          fillColor: pmPolyColor(feature.getProperty(pm + 'mean'), pm),
+          strokeWeight: 1,
+          visible: false,
+          title: sido
+        }
       }
 
       // Geolocation Error

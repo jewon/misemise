@@ -1,4 +1,4 @@
-// WGS84상의 두 점 간 거리를 km단위로 반환하는 모듈 (미사용)
+// WGS84상의 두 점 간 거리를 km단위로 반환하는 모듈
 module.exports = function (lat1,lng1,lat2,lng2) {
   function deg2rad(deg) {
       return deg * (Math.PI/180)
