@@ -25,10 +25,9 @@ module.exports = function(_mise_geojson, _key){
             _mise_geojson.features[i].properties.pm25grade = obj.pm25Grade;
             _mise_geojson.features[i].properties.pm10grade = obj.pm10Grade;
             _mise_geojson.features[i].properties.sido = sido; // 시도명 저장
-          } else {
+          } else { // 측정소 목록에 없는 측정값 받았을 경우 제외시킴(좌표가 없으므로 활용 어려움)
             console.log("Warning: Can't find " + obj.stationName + " from mise_loc geojson");
           }
-
         })
       }
       else if (xhr.readyState == 4) {

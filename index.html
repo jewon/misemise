@@ -45,7 +45,10 @@
     <script src="/script/makeToggleButton.js"></script>
     <script src="/script/poly_color_selector.js"></script>
     <script>
-      var map, infoWindow, myloc, pm, mise_point, mise_poly, bzoom;
+      var map, infoWindow, myloc, pm, mise_point, mise_poly, shape;
+      // Geojson 로드 체크
+      var point_loaded = false;
+      var poly_loaded = false;
       function initMap() {
         // map정의
         var pos = {lat: 36, lng: 128};
@@ -55,38 +58,52 @@
           center: pos
         });
 
-
         // infoWindow정의
         infoWindow = new google.maps.InfoWindow;
 
 
         // 미세먼지 마커 데이터레이어
         mise_point = new google.maps.Data({map: map})
-        mise_point.loadGeoJson('/api/loc'); // 측정소 및 관측 정보 GeoJson 로드
+        mise_point.loadGeoJson('/api/loc', undefined, function(){
+          point_loaded = true;
+          shapeUpdate();
+        }); // 측정소 및 관측 정보 GeoJson 로드
         mise_point.setStyle(pmMakrkerSetStyle);
 
         // 미세먼지 시도폴리곤 데이터레이어
         mise_poly = new google.maps.Data({map: map})
-        mise_poly.loadGeoJson('/resources/citypolygon');
+        mise_poly.loadGeoJson('/resources/citypolygon', undefined, function(){
+          poly_loaded = true;
+          shapeUpdate();
+        });
         mise_poly.setStyle(pmPolySetStyle);
-
+        mise_poly.addListener('mouseover', function(event) {
+          mise_poly.overrideStyle(event.feature, {strokeWeight: 7})
+        })
+        mise_poly.addListener('mouseout', function(event) {
+          mise_poly.overrideStyle(event.feature, {strokeWeight: 1});
+          // revertStyle시 마우스아웃 이벤트가 줌 이벤트 뒤에 나타날시 visible 속성이 무조건 true가 되는 문제 발생
+        })
 
         // zoom에 따른 폴리곤/마커 전환 이벤트 정의
         map.addListener('zoom_changed', function() {
-          let zoom = map.getZoom()
-          console.log("zoom changed " + zoom)
+          /*let zoom = map.getZoom()
+          console.log("zoom changed " + zoom)*/
 
-          if (bzoom >= 9 && zoom < 9) {
+          /*if (bzoom >= 9 && zoom < 9) {
             mise_point.revertStyle();
-            mise_point.forEach(function(f){mise_point.overrideStyle(f, {visible: false})})
+            mise_point.forEach(function(feature){mise_point.overrideStyle(feature, {visible: false})})
             mise_poly.revertStyle();
-            mise_poly.forEach(function(f){mise_poly.overrideStyle(f, {visible: true})})
+            mise_poly.forEach(function(feature){mise_poly.overrideStyle(feature, {visible: true})})
             //mise_poly.StyleOptions.visible = true;
           } else if (bzoom < 9 && zoom >= 9) {
             mise_point.revertStyle();
             mise_poly.revertStyle();
           } else {}
-          bzoom = zoom;
+          bzoom = zoom;*/
+
+
+          shapeUpdate();
         });
 
        // Geolocation
@@ -106,7 +123,7 @@
             });
             google.maps.event.addListener(myloc, 'click', function() { // 마커 클릭시 infoWindow 다시 열림
               infoWindow.open(map, myloc);
-              togglePm("pm25");
+              // togglePm("pm25");
             });
             map.panTo(pos);
             map.setZoom(11);
@@ -130,15 +147,50 @@
         map.controls[google.maps.ControlPosition.TOP_CENTER].push(toggleButtonDiv);
       }// initMap
 
+      // poly_or_point로 변화시킬 모양을 받아 현재 상태와 비교 후 전환(hide)
+      function shapeUpdate(poly_or_point) {
+        console.log("su");
 
+        // 데이터 로드 이전 조작 방지용
+        if (!poly_loaded || !point_loaded) {
+          console.log("geojson loading..")
+          return;
+        }
+
+        // 인자 없을 경우 줌 레벨에 따라 동작, 인자를 주면 강제 전환
+        if (poly_or_point === undefined) {
+          if (map.getZoom() < 9) {
+            poly_or_point = "poly";
+          } else {
+            poly_or_point = "point";
+          }
+        }
+
+        if (poly_or_point == shape) { return; }
+
+        let to_poly; // True일 경우 poly곤 표기, False일 경우 Point표기
+        if (poly_or_point == "poly") {
+          to_poly = true;
+          console.log("hide point");
+        } else {
+          to_poly = false;
+          console.log("hide poly");
+        }
+        mise_point.revertStyle();
+        mise_poly.revertStyle();
+        mise_point.forEach(function(feature){mise_point.overrideStyle(feature, {visible: !(to_poly)})})
+        mise_poly.forEach(function(feature){mise_poly.overrideStyle(feature, {visible: to_poly})})
+        shape = poly_or_point;
+      }
 
       function togglePm(toggleTo) {
         if (pm === toggleTo) {
           return;
         } else {
           pm = toggleTo;
-          mise_point.revertStyle();
-          mise_point.setStyle(pmMakrkerSetStyle)
+          mise_point.setStyle(pmMakrkerSetStyle);
+          mise_poly.setStyle(pmPolySetStyle);
+          // revertStyle을 하지 않아야 overrideStyle메소드가 setStyle이후에도 적용됨
         }
         req_idw(myloc.getPosition(), get_idw);
       }
@@ -148,7 +200,7 @@
         return {
             //icon: gradeToMarker(feature.getProperty('pm10grade')), // pm10단계값에 따라 마커 색상 결정
             icon: marker_link(feature.getProperty(pm + 'value'), pm),   // pm10 값에 따라 마커 색상 조절
-            visible: true,
+            visible: true, // 기본값으로는 항상 보이게(revert시 숨겨지는 문제 없도록)
             clickable: true,
             title: feature.getProperty('stationName') + ": " + feature.getProperty(pm + 'value')// 롤오버 텍스트
           };
@@ -160,8 +212,9 @@
         // $.getJson('/api/sidomean')
         return {
           fillColor: pmPolyColor(feature.getProperty(pm + 'mean'), pm),
+          fillOpacity: 0.5,
           strokeWeight: 1,
-          visible: false,
+          visible: true, // 기본값으로는 항상 보이게(revert시 숨겨지는 문제 없도록)
           title: sido
         }
       }

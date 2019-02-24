@@ -19,13 +19,17 @@ var calc_sido = require('./modules/calc_sido_pm.js')
 var req_times = 0; // 미세먼지 값 API 요청횟수
 var mise_geojson = {}; // 미세먼지값을 속성으로 갖는 지리객체
 
+// 미세먼지 측정소 및 미세먼지값 조회
 req_miseloc(keys.mise_loc, function req_miseloc_cb() { //미세먼지 측정소 조회
   mise_geojson = locator_geojson(); // 조회 후 geojson변환
-  if (req_times++ == 0) { // 서버 시작시 미세먼지 조회 및 측정소 조회 스케쥴링
-    make_schedule_daily(req_miseloc(req_miseloc_cb, keys.mise_loc));
-    make_schedule_hourly(req_mise(mise_geojson, keys.mise));
-  }
+  req_mise(mise_geojson, keys.mise)
+  req_times++;
 });
+// 스케쥴링
+make_schedule_daily(function() { req_miseloc(keys.mise_loc, req_miseloc_cb) });
+make_schedule_hourly(function() { req_mise(mise_geojson, keys.mise) });
+// **req_mise, req_miseloc 함수가 그 자체로 인자로 넘어가야 함
+
 
 function make_schedule_hourly (to_schedule) { // 미세먼지값 조회 스케쥴링
   // 1시간마다 반복작업 (node-schedule)
