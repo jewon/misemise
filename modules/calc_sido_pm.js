@@ -16,7 +16,7 @@ module.exports = function(_mise_geojson){
       }
       if (feature.properties.pm25value > 0) {
         sido_pm[sido].pm25count += 1;
-        sido_pm[sido].pm25mean += parseInt(feature.properties.pm10value);
+        sido_pm[sido].pm25mean += parseInt(feature.properties.pm25value);
       }
     }
   })
