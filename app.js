@@ -48,7 +48,7 @@ function make_schedule_daily (to_schedule) { // 미세먼지측정소 조회 스
   // 1일마다 반복작업 (node-schedule)
   let now = new Date(Date.now());
   console.log("Station Info will be update every " + now.getHours() + "h " + now.getMinutes() + "m (once a day)");
-  var job2 = schedule.scheduleJob(now.getMinutes() + ' ' + now.getHours() + ' * * * *', to_schedule);
+  var job2 = schedule.scheduleJob(now.getMinutes() + ' ' + now.getHours() + '* * *', to_schedule);
 }
 
 // 메인

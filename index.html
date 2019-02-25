@@ -37,10 +37,20 @@
       #pm25UI {
         margin-left: 12px;
       }
+      #info-box {
+        background-color: white;
+        border: 1px solid black;
+        bottom: 30px;
+        height: 20px;
+        padding: 10px;
+        position: absolute;
+        left: 30px;
+      }
     </style>
   </head>
   <body>
     <div id="map"></div>
+    <div id="info-box">?</div>
     <script src="/script/marker_url_generator.js"></script>
     <script src="/script/makeToggleButton.js"></script>
     <script src="/script/poly_color_selector.js"></script>
@@ -79,9 +89,11 @@
         mise_poly.setStyle(pmPolySetStyle);
         mise_poly.addListener('mouseover', function(event) {
           mise_poly.overrideStyle(event.feature, {strokeWeight: 7})
+          document.getElementById('info-box').textContent = event.feature.getProperty("CTP_KOR_NM") + ": " + parseInt(event.feature.getProperty(pm + 'mean'));
         })
         mise_poly.addListener('mouseout', function(event) {
           mise_poly.overrideStyle(event.feature, {strokeWeight: 1});
+          document.getElementById('info-box').textContent = '-';
           // revertStyle시 마우스아웃 이벤트가 줌 이벤트 뒤에 나타날시 visible 속성이 무조건 true가 되는 문제 발생
         })
 
